@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Neon Havoc | High Graphics Shooter</title>
+  <title> shakya game | High Graphics Shooter</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -24,10 +24,17 @@
 
   <canvas id="gameCanvas"></canvas>
 
+  <div id="touchControls" class="touch-controls">
+    <div id="movePad" class="move-pad">
+      <div id="moveKnob" class="move-knob"></div>
+    </div>
+    <div id="fireButton" class="fire-button">FIRE</div>
+  </div>
+
   <div id="overlay" class="overlay active">
     <div class="card">
       <h1>Neon Havoc</h1>
-      <p>Survive the cyber arena. Move with WASD, aim with the mouse, and fire with left click.</p>
+      <p>Survive the cyber arena. Move with WASD or touch controls, aim with the pointer, and fire to win.</p>
       <button id="startBtn">Start Mission</button>
     </div>
   </div>

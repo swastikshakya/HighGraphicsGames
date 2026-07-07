@@ -14,6 +14,9 @@ const state = {
   wave: 1,
   mouseX: 0,
   mouseY: 0,
+  touchMoveX: 0,
+  touchMoveY: 0,
+  touchFire: false,
   player: { x: 0, y: 0, speed: 4.2, radius: 18, cooldown: 0, fireRate: 0.16 },
   bullets: [],
   enemies: [],
@@ -33,6 +36,7 @@ function resize() {
   ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
   state.player.x = window.innerWidth / 2;
   state.player.y = window.innerHeight / 2;
+  state.player.speed = window.innerWidth < 768 ? 3.4 : 4.2;
   if (state.stars.length === 0) {
     state.stars = Array.from({ length: 120 }, () => ({
       x: Math.random() * window.innerWidth,
@@ -131,8 +135,8 @@ function update(dt) {
   state.flash = Math.max(0, state.flash - dt * 0.8);
   state.shake = Math.max(0, state.shake - dt * 0.8);
 
-  const moveX = (keys["d"] ? 1 : 0) - (keys["a"] ? 1 : 0);
-  const moveY = (keys["s"] ? 1 : 0) - (keys["w"] ? 1 : 0);
+  const moveX = (keys["d"] || keys["arrowright"] ? 1 : 0) - (keys["a"] || keys["arrowleft"] ? 1 : 0) + state.touchMoveX;
+  const moveY = (keys["s"] || keys["arrowdown"] ? 1 : 0) - (keys["w"] || keys["arrowup"] ? 1 : 0) + state.touchMoveY;
   const mag = Math.hypot(moveX, moveY) || 1;
   state.player.x += (moveX / mag) * state.player.speed * dt;
   state.player.y += (moveY / mag) * state.player.speed * dt;
@@ -144,7 +148,8 @@ function update(dt) {
     state.player.cooldown -= dt * 0.016;
   }
 
-  if (state.player.cooldown <= 0 && (state.running && (keys["click"] || mouseDown))) {
+  const firePressed = keys["click"] || mouseDown || state.touchFire || keys[" "] || keys["spacebar"] || keys["enter"];
+  if (state.player.cooldown <= 0 && state.running && firePressed) {
     fireBullet();
     state.player.cooldown = state.player.fireRate;
   }
@@ -349,30 +354,89 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 
+const movePad = document.getElementById("movePad");
+const moveKnob = document.getElementById("moveKnob");
+const fireButton = document.getElementById("fireButton");
+
+function resetTouchJoystick() {
+  state.touchMoveX = 0;
+  state.touchMoveY = 0;
+  moveKnob.style.transform = "translate(-50%, -50%)";
+}
+
+function updateJoystick(event) {
+  const rect = movePad.getBoundingClientRect();
+  const centerX = rect.left + rect.width / 2;
+  const centerY = rect.top + rect.height / 2;
+  const dx = event.clientX - centerX;
+  const dy = event.clientY - centerY;
+  const distance = Math.min(36, Math.hypot(dx, dy));
+  const angle = Math.atan2(dy, dx);
+  const clampedX = Math.cos(angle) * distance;
+  const clampedY = Math.sin(angle) * distance;
+  moveKnob.style.left = `${50 + (clampedX / 36) * 50}%`;
+  moveKnob.style.top = `${50 + (clampedY / 36) * 50}%`;
+  state.touchMoveX = Math.max(-1, Math.min(1, clampedX / 36));
+  state.touchMoveY = Math.max(-1, Math.min(1, clampedY / 36));
+}
+
 window.addEventListener("resize", resize);
 window.addEventListener("mousemove", (event) => {
   state.mouseX = event.clientX;
   state.mouseY = event.clientY;
 });
+canvas.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+  state.mouseX = event.clientX;
+  state.mouseY = event.clientY;
+  mouseDown = true;
+  keys.click = true;
+  canvas.setPointerCapture(event.pointerId);
+});
+canvas.addEventListener("pointermove", (event) => {
+  state.mouseX = event.clientX;
+  state.mouseY = event.clientY;
+});
+window.addEventListener("pointerup", () => {
+  mouseDown = false;
+  keys.click = false;
+});
 window.addEventListener("keydown", (event) => {
-  keys[event.key.toLowerCase()] = true;
-  if (event.code === "Space") {
+  const key = event.key.toLowerCase();
+  keys[key] = true;
+  if (key === " " || key === "spacebar" || key === "enter") {
     event.preventDefault();
   }
 });
 window.addEventListener("keyup", (event) => {
-  keys[event.key.toLowerCase()] = false;
+  const key = event.key.toLowerCase();
+  keys[key] = false;
 });
 
 let mouseDown = false;
-canvas.addEventListener("mousedown", () => {
-  mouseDown = true;
-  keys.click = true;
+movePad.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+  movePad.setPointerCapture(event.pointerId);
+  updateJoystick(event);
 });
-window.addEventListener("mouseup", () => {
-  mouseDown = false;
-  keys.click = false;
+movePad.addEventListener("pointermove", (event) => {
+  if (event.buttons === 0 && event.pointerType !== "touch") return;
+  updateJoystick(event);
 });
+movePad.addEventListener("pointerup", resetTouchJoystick);
+movePad.addEventListener("pointercancel", resetTouchJoystick);
+
+fireButton.addEventListener("pointerdown", (event) => {
+  event.preventDefault();
+  state.touchFire = true;
+});
+fireButton.addEventListener("pointerup", () => {
+  state.touchFire = false;
+});
+fireButton.addEventListener("pointerleave", () => {
+  state.touchFire = false;
+});
+
 canvas.addEventListener("contextmenu", (event) => event.preventDefault());
 startBtn.addEventListener("click", startGame);
 

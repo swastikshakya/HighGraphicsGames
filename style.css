@@ -23,6 +23,8 @@ html, body {
 
 body {
   position: relative;
+  overscroll-behavior: none;
+  touch-action: none;
 }
 
 canvas {
@@ -30,6 +32,7 @@ canvas {
   width: 100vw;
   height: 100vh;
   cursor: crosshair;
+  touch-action: none;
 }
 
 .hud {
@@ -113,4 +116,84 @@ button {
 
 button:hover {
   transform: translateY(-1px);
+}
+
+.touch-controls {
+  display: none;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.move-pad {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.25);
+  background: rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(6px);
+  pointer-events: auto;
+}
+
+.move-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, var(--accent), var(--accent-2));
+  box-shadow: 0 0 18px rgba(0,247,255,0.25);
+  transform: translate(-50%, -50%);
+}
+
+.fire-button {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  width: 108px;
+  height: 108px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: white;
+  background: linear-gradient(145deg, rgba(255, 75, 216, 0.95), rgba(0, 247, 255, 0.85));
+  box-shadow: 0 0 24px rgba(255, 75, 216, 0.28);
+  pointer-events: auto;
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .touch-controls {
+    display: block;
+  }
+
+  .hud {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .panel {
+    min-width: 72px;
+    padding: 8px 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: 24px;
+  }
+
+  .card h1 {
+    font-size: 1.7rem;
+  }
+
+  .card p {
+    font-size: 0.95rem;
+  }
 }
