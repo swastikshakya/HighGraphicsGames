@@ -1,12 +1,26 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const overlay = document.getElementById("overlay");
+const overlayTitle = document.getElementById("overlayTitle");
+const overlayMessage = document.getElementById("overlayMessage");
 const startBtn = document.getElementById("startBtn");
+const resumeBtn = document.getElementById("resumeBtn");
+const stopBtn = document.getElementById("stopBtn");
+const settingsBtn = document.getElementById("settingsBtn");
+const settingsPanel = document.getElementById("settingsPanel");
+const menuActions = document.getElementById("menuActions");
+const backBtn = document.getElementById("backBtn");
+const volumeDownBtn = document.getElementById("volumeDownBtn");
+const volumeUpBtn = document.getElementById("volumeUpBtn");
+const volumeValue = document.getElementById("volumeValue");
+const menuBtn = document.getElementById("menuBtn");
 const scoreEl = document.getElementById("score");
 const healthEl = document.getElementById("health");
 const waveEl = document.getElementById("wave");
 
 const keys = {};
+let audioCtx = null;
+let masterGain = null;
 const state = {
   running: false,
   score: 0,
@@ -17,6 +31,8 @@ const state = {
   touchMoveX: 0,
   touchMoveY: 0,
   touchFire: false,
+  volume: 0.5,
+  menuOpen: false,
   player: { x: 0, y: 0, speed: 4.2, radius: 18, cooldown: 0, fireRate: 0.16 },
   bullets: [],
   enemies: [],
@@ -47,6 +63,25 @@ function resize() {
   }
 }
 
+function openMenu(title, message, showResume = false) {
+  state.menuOpen = true;
+  overlay.classList.add("active");
+  overlayTitle.textContent = title;
+  overlayMessage.textContent = message;
+  menuActions.classList.remove("hidden");
+  settingsPanel.classList.add("hidden");
+  resumeBtn.classList.toggle("hidden", !showResume);
+  startBtn.textContent = state.score > 0 ? "Restart Mission" : "Start Mission";
+  startBtn.classList.toggle("hidden", false);
+  stopBtn.classList.toggle("hidden", false);
+  settingsBtn.classList.toggle("hidden", false);
+}
+
+function closeMenu() {
+  state.menuOpen = false;
+  overlay.classList.remove("active");
+}
+
 function resetGame() {
   state.running = true;
   state.score = 0;
@@ -73,6 +108,77 @@ function updateHud() {
 
 function startGame() {
   resetGame();
+  closeMenu();
+}
+
+function pauseGame() {
+  state.running = false;
+  openMenu("Paused", "Take a breather. Resume when you are ready.", true);
+}
+
+function resumeGame() {
+  if (state.score === 0 && state.health === 100 && state.wave === 1 && state.enemies.length === 0) {
+    startGame();
+  } else {
+    state.running = true;
+    closeMenu();
+  }
+}
+
+function stopGame() {
+  state.running = false;
+  state.score = 0;
+  state.health = 100;
+  state.wave = 1;
+  state.bullets = [];
+  state.enemies = [];
+  state.particles = [];
+  state.spawnTimer = 0;
+  state.waveTimer = 0;
+  state.flash = 0;
+  state.shake = 0;
+  updateHud();
+  openMenu("Game Stopped", "Start a fresh mission whenever you are ready.");
+}
+
+function showSettings() {
+  menuActions.classList.add("hidden");
+  settingsPanel.classList.remove("hidden");
+}
+
+function hideSettings() {
+  settingsPanel.classList.add("hidden");
+  menuActions.classList.remove("hidden");
+}
+
+function ensureAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  masterGain = audioCtx.createGain();
+  masterGain.gain.value = state.volume * 0.25;
+  masterGain.connect(audioCtx.destination);
+}
+
+function playTone(frequency, duration, type = "square", gainValue = 0.03) {
+  if (!audioCtx) ensureAudio();
+  const oscillator = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+  oscillator.type = type;
+  oscillator.frequency.value = frequency;
+  gainNode.gain.value = gainValue;
+  oscillator.connect(gainNode);
+  gainNode.connect(masterGain);
+  oscillator.start();
+  gainNode.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+  oscillator.stop(audioCtx.currentTime + duration);
+}
+
+function updateVolume(delta) {
+  state.volume = Math.max(0, Math.min(1, state.volume + delta));
+  volumeValue.textContent = `${Math.round(state.volume * 100)}%`;
+  if (masterGain) {
+    masterGain.gain.value = state.volume * 0.25;
+  }
 }
 
 function spawnEnemy() {
@@ -105,6 +211,7 @@ function spawnEnemy() {
 
 function fireBullet() {
   const angle = Math.atan2(state.mouseY - state.player.y, state.mouseX - state.player.x);
+  playTone(980, 0.05, "square", 0.015);
   state.bullets.push({
     x: state.player.x,
     y: state.player.y,
@@ -218,10 +325,12 @@ function update(dt) {
 
   if (state.health <= 0) {
     state.running = false;
-    overlay.classList.add("active");
-    document.querySelector(".card h1").textContent = "Mission Failed";
-    document.querySelector(".card p").textContent = `You survived ${state.wave} waves and scored ${state.score} points. Press the button to try again.`;
+    playTone(180, 0.35, "sawtooth", 0.025);
+    overlayTitle.textContent = "Mission Failed";
+    overlayMessage.textContent = `You survived ${state.wave} waves and scored ${state.score} points. Press the button to try again.`;
     startBtn.textContent = "Restart Mission";
+    overlay.classList.add("active");
+    state.menuOpen = true;
   }
 
   updateHud();
@@ -387,6 +496,7 @@ window.addEventListener("mousemove", (event) => {
 });
 canvas.addEventListener("pointerdown", (event) => {
   event.preventDefault();
+  ensureAudio();
   state.mouseX = event.clientX;
   state.mouseY = event.clientY;
   mouseDown = true;
@@ -407,6 +517,14 @@ window.addEventListener("keydown", (event) => {
   if (key === " " || key === "spacebar" || key === "enter") {
     event.preventDefault();
   }
+  if (key === "escape") {
+    event.preventDefault();
+    if (state.running) {
+      pauseGame();
+    } else if (state.menuOpen) {
+      closeMenu();
+    }
+  }
 });
 window.addEventListener("keyup", (event) => {
   const key = event.key.toLowerCase();
@@ -416,6 +534,7 @@ window.addEventListener("keyup", (event) => {
 let mouseDown = false;
 movePad.addEventListener("pointerdown", (event) => {
   event.preventDefault();
+  ensureAudio();
   movePad.setPointerCapture(event.pointerId);
   updateJoystick(event);
 });
@@ -428,6 +547,7 @@ movePad.addEventListener("pointercancel", resetTouchJoystick);
 
 fireButton.addEventListener("pointerdown", (event) => {
   event.preventDefault();
+  ensureAudio();
   state.touchFire = true;
 });
 fireButton.addEventListener("pointerup", () => {
@@ -439,7 +559,21 @@ fireButton.addEventListener("pointerleave", () => {
 
 canvas.addEventListener("contextmenu", (event) => event.preventDefault());
 startBtn.addEventListener("click", startGame);
+resumeBtn.addEventListener("click", resumeGame);
+stopBtn.addEventListener("click", stopGame);
+settingsBtn.addEventListener("click", showSettings);
+backBtn.addEventListener("click", hideSettings);
+volumeDownBtn.addEventListener("click", () => updateVolume(-0.1));
+volumeUpBtn.addEventListener("click", () => updateVolume(0.1));
+menuBtn.addEventListener("click", () => {
+  if (state.running) {
+    pauseGame();
+  } else {
+    openMenu("Menu", "Choose an action to continue the mission.", state.score > 0 || state.health < 100 || state.wave > 1);
+  }
+});
 
 resize();
 updateHud();
+updateVolume(0);
 requestAnimationFrame(loop);

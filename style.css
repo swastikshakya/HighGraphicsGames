@@ -118,6 +118,62 @@ button:hover {
   transform: translateY(-1px);
 }
 
+.menu-btn {
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(9, 14, 31, 0.8);
+  color: var(--text);
+  padding: 10px 14px;
+  box-shadow: none;
+}
+
+.menu-actions,
+.settings-panel {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.action-btn {
+  min-width: 120px;
+}
+
+.settings-panel {
+  flex-direction: column;
+  align-items: center;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  width: min(100%, 260px);
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.06);
+}
+
+.volume-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mini-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.hidden {
+  display: none;
+}
+
 .touch-controls {
   display: none;
   position: fixed;
@@ -195,5 +251,13 @@ button:hover {
 
   .card p {
     font-size: 0.95rem;
+  }
+
+  .menu-actions {
+    flex-direction: column;
+  }
+
+  .action-btn {
+    width: 100%;
   }
 }

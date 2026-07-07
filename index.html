@@ -20,6 +20,7 @@
       <span class="label">Wave</span>
       <span id="wave">1</span>
     </div>
+    <button id="menuBtn" class="menu-btn">Menu</button>
   </div>
 
   <canvas id="gameCanvas"></canvas>
@@ -33,9 +34,27 @@
 
   <div id="overlay" class="overlay active">
     <div class="card">
-      <h1>Neon Havoc</h1>
-      <p>Survive the cyber arena. Move with WASD or touch controls, aim with the pointer, and fire to win.</p>
-      <button id="startBtn">Start Mission</button>
+      <h1 id="overlayTitle">Neon Havoc</h1>
+      <p id="overlayMessage">Survive the cyber arena. Move with WASD or touch controls, aim with the pointer, and fire to win.</p>
+
+      <div id="menuActions" class="menu-actions">
+        <button id="startBtn" class="action-btn">Start Mission</button>
+        <button id="resumeBtn" class="action-btn">Resume</button>
+        <button id="stopBtn" class="action-btn">Stop</button>
+        <button id="settingsBtn" class="action-btn">Settings</button>
+      </div>
+
+      <div id="settingsPanel" class="settings-panel hidden">
+        <div class="setting-row">
+          <span>Sound</span>
+          <div class="volume-controls">
+            <button id="volumeDownBtn" class="mini-btn">−</button>
+            <span id="volumeValue">50%</span>
+            <button id="volumeUpBtn" class="mini-btn">+</button>
+          </div>
+        </div>
+        <button id="backBtn" class="action-btn">Back</button>
+      </div>
     </div>
   </div>
 
