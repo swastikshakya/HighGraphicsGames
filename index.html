@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neon Havoc | High Graphics Shooter</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="hud">
+    <div class="panel">
+      <span class="label">Score</span>
+      <span id="score">0</span>
+    </div>
+    <div class="panel">
+      <span class="label">Health</span>
+      <span id="health">100</span>
+    </div>
+    <div class="panel">
+      <span class="label">Wave</span>
+      <span id="wave">1</span>
+    </div>
+  </div>
+
+  <canvas id="gameCanvas"></canvas>
+
+  <div id="overlay" class="overlay active">
+    <div class="card">
+      <h1>Neon Havoc</h1>
+      <p>Survive the cyber arena. Move with WASD, aim with the mouse, and fire with left click.</p>
+      <button id="startBtn">Start Mission</button>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
